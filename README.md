@@ -16,7 +16,7 @@ snake/
 ## Setup
 
 ```bash
-pip install gymnasium stable-baselines3 pygame
+pip install gymnasium stable-baselines3 pygame rich
 ```
 
 ## Smoke test
