@@ -6,9 +6,10 @@ A Snake game refactored for reinforcement learning using [Gymnasium](https://gym
 
 ```
 snake/
-├── game.py        # Pure game logic — no pygame, fast for simulation
-├── env.py         # Gymnasium environment wrapping the game
+├── Game_logic.py        # Pure game logic — no pygame, fast for simulation
+├── Env.py         # Gymnasium environment wrapping the game
 ├── renderer.py    # Pygame rendering, fully isolated
+├── Game.py        # The old snake game in pygame
 └── smoke_test.py  # Sanity-check the env with a random agent
 ```
 
@@ -72,6 +73,8 @@ while True:
 ## Next steps
 
 - [ ] Train a DQN or PPO agent with Stable Baselines 3
+- [ ] Make the renderer file
+- [ ] Make the smoke_test file
 - [ ] Add TensorBoard logging
 - [ ] Experiment with raw grid observations + CNN policy
 - [ ] Tune reward shaping
