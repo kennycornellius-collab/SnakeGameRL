@@ -1,0 +1,17 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Training artifacts (optional, remove if you want to track models)
+*.zip
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
