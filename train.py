@@ -34,28 +34,28 @@ def main():
         verbose=1,
     )
 
-    model = PPO.load("models/snake_ppo.zip", env=env)
-    model.learn(total_timesteps=4_000_000, reset_num_timesteps=False)
-    # model = PPO(
-    #     "MlpPolicy",
-    #     env,
-    #     verbose=1,
-    #     tensorboard_log=LOG_PATH,
-    #     learning_rate=1e-3,
-    #     n_steps=2048,
-    #     batch_size=64,
-    #     n_epochs=10,
-    #     gamma=0.99,
-    # )
+    # model = PPO.load("models/snake_ppo.zip", env=env)
+    # model.learn(total_timesteps=4_000_000, reset_num_timesteps=False)
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        tensorboard_log=LOG_PATH,
+        learning_rate=1e-3,
+        n_steps=2048,
+        batch_size=64,
+        n_epochs=10,
+        gamma=0.99,
+    )
 
     print(f"Training for {TIMESTEPS:,} timesteps across {N_ENVS} parallel envs...")
     print(f"TensorBoard: tensorboard --logdir {LOG_PATH}\n")
 
-    # model.learn(
-    #     total_timesteps=TIMESTEPS,
-    #     callback=[eval_callback, checkpoint_callback],
-    #     progress_bar=True,
-    # )
+    model.learn(
+        total_timesteps=TIMESTEPS,
+        callback=[eval_callback, checkpoint_callback],
+        progress_bar=True,
+    )
 
     model.save(MODEL_PATH)
     print(f"\n✅  Training done. Model saved to {MODEL_PATH}.zip")
