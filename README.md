@@ -16,9 +16,10 @@ snake/
 ## Setup
 
 ```bash
-pip install gymnasium stable-baselines3 pygame rich
+pip install gymnasium stable-baselines3 pygame rich tqdm "setuptools<70" tensorboard
 ```
 
+> `setuptools<70` is pinned due to a known compatibility issue with `tensorboard` and newer setuptools versions.
 ## Smoke test
 
 Verifies the environment contract is correct before plugging in an RL algo:
@@ -72,9 +73,9 @@ while True:
 
 ## Next steps
 
-- [ ] Train a DQN or PPO agent with Stable Baselines 3
-- [ ] Make the renderer file
-- [ ] Make the smoke_test file
-- [ ] Add TensorBoard logging
+- [V] Train a DQN or PPO agent with Stable Baselines 3
+- [V] Make the renderer file
+- [V] Make the smoke_test file
+- [V] Add TensorBoard logging
 - [ ] Experiment with raw grid observations + CNN policy
 - [ ] Tune reward shaping
