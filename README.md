@@ -71,6 +71,10 @@ while True:
         env.reset()
 ```
 
+## Features in the train script
+Able to changed the code for retraining and creating a new model.
+
+
 ## Next steps
 
 - [V] Train a DQN or PPO agent with Stable Baselines 3

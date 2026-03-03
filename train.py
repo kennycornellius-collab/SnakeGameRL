@@ -33,9 +33,11 @@ def main():
         name_prefix="snake_ppo",
         verbose=1,
     )
-
+    #uncomment this code below if you want to retrain an already existing model
     # model = PPO.load("models/snake_ppo.zip", env=env)
     # model.learn(total_timesteps=4_000_000, reset_num_timesteps=False)
+
+    #comment the model = and model.learn code if you want to retrain an already existing model.
     model = PPO(
         "MlpPolicy",
         env,
