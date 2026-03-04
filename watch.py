@@ -4,7 +4,7 @@ watch.py — load a trained model and watch it play Snake.
 Usage:
     python watch.py
     python watch.py --model models/snake_ppo.zip   # specify a model path
-    python watch.py --speed 10                      # control FPS (default 10)
+    python watch.py --speed 60                      # control FPS (default 60)
 """
 
 import argparse
