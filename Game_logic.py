@@ -22,7 +22,6 @@ class SnakeGame:
         return self._state()
 
     def step(self, dx: int, dy: int) -> tuple[dict, float, bool]:
-        
         assert self.alive, "Game is over — call reset() first."
 
         self.direction = (dx, dy)
@@ -31,21 +30,25 @@ class SnakeGame:
         head_x, head_y = self.body[0]
         new_head = (head_x + dx, head_y + dy)
 
-       
         if self._is_wall(new_head) or new_head in set(self.body):
             self.alive = False
             return self._state(), -10.0, True
 
-        
         ate_food = new_head == self.food
         if ate_food:
-            self.body = [new_head] + self.body   
+            self.body = [new_head] + self.body
             self.score += 1
             self.food = self._spawn_food()
             reward = 10.0
         else:
             self.body = [new_head] + self.body[:-1]
-            reward = -0.01                        
+
+            
+            open_cells = self._flood_fill(new_head)
+            total_free = self.cols * self.rows - len(self.body)
+            space_ratio = open_cells / total_free if total_free > 0 else 0.0
+            reward = -0.01 + 0.05 * space_ratio
+            
 
         return self._state(), reward, False
 
@@ -70,3 +73,27 @@ class SnakeGame:
             pos = (random.randint(0, self.cols - 1), random.randint(0, self.rows - 1))
             if pos not in occupied:
                 return pos
+    
+    def _flood_fill(self, start: tuple[int, int], max_cells: int = 50) -> int:
+        visited = set()
+        stack = [start]
+        body_set = set(self.body) 
+        
+        
+        while stack and len(visited) < max_cells:
+            pos = stack.pop()
+            
+            if pos in visited:
+                continue
+                
+            x, y = pos
+            if x < 0 or x >= self.cols or y < 0 or y >= self.rows:
+                continue
+                
+            if pos in body_set and pos != start:
+                continue
+                
+            visited.add(pos)
+            stack += [(x+1, y), (x-1, y), (x, y+1), (x, y-1)]
+            
+        return max(0, len(visited) - 1)

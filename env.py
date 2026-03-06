@@ -22,7 +22,7 @@ class SnakeEnv(gym.Env):
 
         
         self.observation_space = spaces.Box(
-            low=-1.0, high=1.0, shape=(9,), dtype=np.float32
+            low=-1.0, high=1.0, shape=(12,), dtype=np.float32
         )
         
         self.action_space = spaces.Discrete(3)
@@ -102,6 +102,15 @@ class SnakeEnv(gym.Env):
         hx, hy = head
         fx, fy = food
 
+        
+        MAX_SCAN = 50  
+        
+        
+        ff_straight = 0.0 if is_deadly(straight) else self.game._flood_fill(straight, MAX_SCAN) / MAX_SCAN
+        ff_right    = 0.0 if is_deadly(right)    else self.game._flood_fill(right, MAX_SCAN) / MAX_SCAN
+        ff_left     = 0.0 if is_deadly(left)     else self.game._flood_fill(left, MAX_SCAN) / MAX_SCAN
+        
+
         obs = np.array([
             float(is_deadly(straight)),      
             float(is_deadly(right)),          
@@ -112,6 +121,9 @@ class SnakeEnv(gym.Env):
             float(fx > hx),                   
             float(fy < hy),                   
             float(fy > hy),                   
+            float(ff_straight),
+            float(ff_right),    
+            float(ff_left),    
         ], dtype=np.float32)
 
         return obs

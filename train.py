@@ -48,6 +48,7 @@ def main():
         batch_size=64,
         n_epochs=10,
         gamma=0.99,
+        device="cpu",
     )
 
     print(f"Training for {TIMESTEPS:,} timesteps across {N_ENVS} parallel envs...")
