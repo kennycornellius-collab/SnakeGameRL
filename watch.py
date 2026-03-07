@@ -10,6 +10,7 @@ Usage:
 import argparse
 import sys
 from stable_baselines3 import PPO
+#change env to envCnn to see the cnn policy agent
 from env import SnakeEnv
 from renderer import Renderer
 
@@ -17,8 +18,8 @@ from renderer import Renderer
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="models/snake_ppo.zip", help="Path to trained model")
-    parser.add_argument("--speed", type=int, default=60, help="Playback FPS")
-    parser.add_argument("--episodes", type=int, default=10, help="Number of episodes to watch")
+    parser.add_argument("--speed", type=int, default=300, help="Playback FPS")
+    parser.add_argument("--episodes", type=int, default=100, help="Number of episodes to watch")
     args = parser.parse_args()
 
     
