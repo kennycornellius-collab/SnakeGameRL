@@ -42,12 +42,7 @@ class SnakeGame:
             reward = 10.0
         else:
             self.body = [new_head] + self.body[:-1]
-
-            
-            open_cells = self._flood_fill(new_head)
-            total_free = self.cols * self.rows - len(self.body)
-            space_ratio = open_cells / total_free if total_free > 0 else 0.0
-            reward = -0.01 + 0.05 * space_ratio
+            reward = -0.01
             
 
         return self._state(), reward, False
