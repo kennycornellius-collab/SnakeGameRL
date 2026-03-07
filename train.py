@@ -4,12 +4,12 @@ from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from env import SnakeEnv
 
 
-TIMESTEPS      = 1_000_000   
-N_ENVS         = 4           
+TIMESTEPS      = 5_000_000   
+N_ENVS         = 8           
 MODEL_PATH     = "models/snake_ppo"
 LOG_PATH       = "logs/"
 EVAL_FREQ      = 10_000      
-SAVE_FREQ      = 50_000      
+SAVE_FREQ      = 62_500      
 
 
 def main():
@@ -33,21 +33,21 @@ def main():
         name_prefix="snake_ppo",
         verbose=1,
     )
-    #uncomment this code below if you want to retrain an already existing model
+    # To continue training an existing model, comment the model = PPO(...) and model.learn(...) block
+    # and uncomment these two lines instead:
     # model = PPO.load("models/snake_ppo.zip", env=env)
     # model.learn(total_timesteps=4_000_000, reset_num_timesteps=False)
 
-    #comment the model = and model.learn code if you want to retrain an already existing model.
     model = PPO(
         "MlpPolicy",
         env,
         verbose=1,
         tensorboard_log=LOG_PATH,
-        learning_rate=1e-3,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
-        gamma=0.99,
+        learning_rate=0.0006885124586537938,
+        n_steps=4096,
+        batch_size=128,
+        n_epochs=20,
+        gamma=0.9540035038350664,
         device="cpu",
     )
 
