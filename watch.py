@@ -21,15 +21,19 @@ def main():
     parser.add_argument("--episodes", type=int, default=10, help="Number of episodes to watch")
     args = parser.parse_args()
 
-    # --- load model ---
+    
     print(f"Loading model from {args.model}...")
     model = PPO.load(args.model)
 
-    # --- env + renderer ---
+    
     env = SnakeEnv()
     renderer = Renderer(env.cols, env.rows, fps=args.speed)
 
     print(f"Watching {args.episodes} episodes at {args.speed} FPS. Press ESC to quit.\n")
+
+    all_scores = []
+    all_rewards = []
+    all_timesteps = []
 
     for episode in range(args.episodes):
         obs, _ = env.reset()
@@ -47,10 +51,18 @@ def main():
             if terminated or truncated:
                 print(f"Episode {episode + 1:>2} | steps={steps:>5} | "
                       f"score={info['score']:>3} | reward={total_reward:>8.2f}")
+                all_scores.append(info['score'])
+                all_rewards.append(total_reward)
+                all_timesteps.append(steps)
                 break
 
     env.close()
     renderer.close()
+
+    print("\n--- Averages across all episodes ---")
+    print(f"  Avg Score    : {sum(all_scores) / len(all_scores):.2f}")
+    print(f"  Avg Reward   : {sum(all_rewards) / len(all_rewards):.2f}")
+    print(f"  Avg Timesteps: {sum(all_timesteps) / len(all_timesteps):.2f}")
     print("\nDone.")
 
 
