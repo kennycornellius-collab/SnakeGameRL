@@ -27,7 +27,7 @@ SnakeGameRL/
 ## Setup
 
 ```bash
-pip install gymnasium stable-baselines3 pygame rich tqdm "setuptools<70" tensorboard
+pip install gymnasium stable-baselines3 pygame rich tqdm "setuptools<70" tensorboard optuna
 ```
 
 > `setuptools<70` is pinned due to a known compatibility issue with `tensorboard` and newer setuptools versions.
@@ -73,18 +73,6 @@ python smoke_test.py
 
 Indices 9–11 are computed by running a flood-fill from each candidate next cell (capped at `MAX_SCAN` cells) and normalising the result. If a direction is immediately deadly the value is `0.0`.
 
-### Reward function
-
-| Event | Reward |
-|---|---|
-| Ate food | +10 |
-| Died | −10 |
-| Each step | `−0.01 + 0.05 × space_ratio` |
-
-`space_ratio` is the fraction of total free cells reachable from the new head position, encouraging the agent to keep open space rather than trap itself.
-
----
-
 ## Training
 
 ```bash
@@ -111,13 +99,25 @@ Loads the saved model and renders the agent playing in real time via pygame.
 
 ## Results
 
-> 🚧 Full results and training curves will be added here once both policies are trained and evaluated side by side.
+> 🚧 Full results will be added here once both policies are trained and evaluated side by side so changes to the number may occur.
+
+The result are done with 100 times episodes
 
 | Policy | Observation | Avg. Score | Avg. Reward | Timesteps |
 |---|---|---|---|---|
-| MLP (PPO) | 12-dim vector | — | — | — |
-| CNN (PPO) | Raw grid | — | — | — |
+| MLP (PPO) | 12-dim vector(without tuning) | 71.48 | 692.85 | 1317.70 |
+| MLP (PPO) | 12-dim vector(after tuning) | 60.69 | 587.18 | 1043.48 |
+| CNN (PPO) | Raw grid(without tuning) | — | — | — |
+| CNN (PPO) | Raw grid(after tuning) | — | — | — |
 
+MLP tuning result:
+Best params: {'learning_rate': 0.0006885124586537938, 'n_steps': 4096, 'batch_size': 128, 'n_epochs': 20, 'gamma': 0.9540035038350664}
+Best reward: 678.3603422026866
+
+MLP result are achieved on a model, trained on a 5 million total timesteps.
+
+Notes MLP:
+The hyperparameter tuning was conducted using 500k timesteps per trial due to computational constraints. The best parameters found by Optuna did not outperform the original parameters when trained for the full 5M timesteps. This is a known limitation — parameter combinations that converge quickly in short runs don't necessarily generalize to longer training runs. A more accurate tuning study would use a higher timestep budget per trial (ideally 2M+), but this was not feasible given available hardware.
 ---
 
 ## Roadmap
@@ -131,4 +131,4 @@ Loads the saved model and renders the agent playing in real time via pygame.
 - [x] Flood-fill reward shaping + extended observation (12 features)
 - [ ] CNN policy with raw grid observation
 - [ ] Train CNN policy
-- [ ] Compare MLP vs CNN — reward curves, convergence, final score
+- [ ] Compare MLP vs CNN
