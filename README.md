@@ -2,7 +2,7 @@
 
 A Snake game built from the ground up for reinforcement learning using [Gymnasium](https://gymnasium.farama.org/) and [Stable Baselines 3](https://stable-baselines3.readthedocs.io/).
 
-The project currently has a fully trained **MLP policy (PPO)** as the baseline and a **CNN policy** with a raw grid observation trained and compared against it.
+The project trains and compares two policies on the same Snake environment — an **MLP policy** using hand-engineered features and a **CNN policy** learning directly from raw grid observations.
 
 ---
 
@@ -104,18 +104,21 @@ The direction channel fills the entire grid with a single constant value. A CNN 
 |---|---|
 | Eat food | `+1.0` |
 | Die (wall or self-collision) | `-1.0` |
+| Flood-fill survival bonus | `+0.01 × (reachable_cells / board_size)` per step |
 | Timeout (no food in 300 steps) | `-0.5` (truncate, not terminate) |
 | Any other step | `0.0` |
 
-The step reward is intentionally `0.0`. A non-zero living penalty (e.g. `-0.01`) was found to cause the agent to commit suicide after eating a few foods — after 100 steps the accumulated penalty equals the death cost, so dying becomes mathematically equivalent to surviving. Removing it means there is no incentive to die early.
+**Why step reward is `0.0`:** A living penalty (e.g. `-0.01`) was found to cause the agent to commit suicide after eating a few foods — after 100 steps the accumulated cost equals the death penalty, making dying and surviving mathematically equivalent. Removing it eliminates any incentive to die early.
 
-Death and food are kept at a 1:1 ratio (`-1 / +1`) so the agent genuinely weighs survival against food-seeking. The MLP used a 1:10 ratio (`-1 / +10`) which made the agent comparatively reckless about dying.
+**Why death and food are 1:1 (`-1 / +1`):** The MLP used a 1:10 ratio (`-1 / +10`) which made the agent reckless about dying since one food easily outweighed a death. The tighter ratio forces the CNN agent to genuinely weigh survival against food-seeking.
+
+**Why the flood-fill survival bonus:** At around score 15–16 the agent plateaued, dying consistently from self-trapping — moving into corridors it couldn't escape. The flood-fill bonus rewards the agent proportionally to how much open space surrounds its head every step, teaching it to keep escape routes open before it gets trapped rather than reacting after.
 
 ### Curriculum learning
 
-To address the sparse reward problem on a large 20×15 board, a curriculum phase is applied during early training. When `score < 5`, food is always spawned within Manhattan distance 2 of the snake's head instead of randomly. This guarantees the agent receives positive reward signal from the very first episodes and learns the food-seeking behaviour before generalising it to the full board. Once `score ≥ 5`, food placement reverts to normal random spawning.
+To address the sparse reward problem on a large 20×15 board, a curriculum phase is applied during early training. When `score < 8`, food is always spawned within Manhattan distance 2 of the snake's head instead of randomly. Once `score ≥ 8`, food placement reverts to normal random spawning.
 
-Without this, the agent would die or time out hundreds of times before accidentally finding food, receiving only negative signals and never learning what it is optimising for.
+Without this, the agent would die or time out for thousands of episodes before accidentally finding food, receiving only negative signals and never learning what it is optimising for. The curriculum guarantees early positive signal so the agent first learns *that* food exists and *that* moving toward it is rewarded — then generalises that behaviour to the full board.
 
 ### CNN architecture (`cnn_policy.py`)
 
@@ -126,9 +129,25 @@ Conv2d(64 → 64, 3×3, stride=2, padding=1) →  ReLU
 Flatten → Linear(n_flat → 256) → ReLU
 ```
 
-The features extractor produces a 256-dim vector fed into a small `[128, 64]` MLP head for both the policy and value networks.
+The features extractor produces a 256-dim vector fed into a `[128, 64]` MLP head for both the policy and value networks.
 
-> **Note on `VecTransposeImage`:** SB3 automatically wraps CNN environments with `VecTransposeImage`, which converts observations from `(H, W, C)` to `(C, H, W)` before they reach the network. No manual `.permute()` is needed in the `forward()` method — adding one would double-transpose and corrupt the input.
+> **Note on `VecTransposeImage`:** SB3 automatically wraps CNN environments with `VecTransposeImage`, which converts observations from `(H, W, C)` to `(C, H, W)` before they reach the network. No manual `.permute()` is needed in `forward()` — adding one would double-transpose and corrupt the input.
+
+### CNN training hyperparameters
+
+| Parameter | Value |
+|---|---|
+| Algorithm | PPO |
+| Total timesteps | 15 000 000 |
+| Parallel envs | 8 |
+| Learning rate | 3e-4 |
+| n_steps | 2048 |
+| Batch size | 256 |
+| n_epochs | 10 |
+| Gamma | 0.99 |
+| GAE lambda | 0.95 |
+| Clip range | 0.2 |
+| Entropy coefficient | 0.01 |
 
 ---
 
@@ -162,25 +181,43 @@ Loads the saved model and renders the agent playing in real time via pygame.
 
 ## Results
 
-> 🚧 CNN final results will be added once training is complete.
+Results are averaged over 100 episodes. The MLP was trained for 5 million timesteps, the CNN for 15 million.
 
-Results are averaged over 100 episodes.
-
-| Policy | Observation | Avg. Score | Avg. Reward | Avg. Timesteps |
+| Policy | Observation | Avg. Score | Avg. Reward | Avg. Steps |
 |---|---|---|---|---|
 | MLP (PPO) | 12-dim vector (without tuning) | 71.48 | 692.85 | 1317.70 |
 | MLP (PPO) | 12-dim vector (after tuning) | 60.69 | 587.18 | 1043.48 |
-| CNN (PPO) | Raw grid, 4 channels | — | — | — |
+| CNN (PPO) | Raw grid, 4 channels | 8.74 | 8.42 | 267.16 |
 
 ### Reward scale difference between MLP and CNN
 
 MLP and CNN reward values are **not directly comparable**. The MLP uses a food reward of `+10` while the CNN uses `+1`, so an MLP reward of `+100` and a CNN reward of `+10` represent identical gameplay (10 foods eaten). The rescaling was intentional — the CNN uses a tighter 1:1 death-to-food ratio for a cleaner training signal, whereas the MLP's 10:1 ratio made dying relatively cheap.
+
+### CNN training challenges
+
+Getting the CNN agent to learn at all required solving several problems that the MLP never encountered:
+
+**Sparse reward problem.** On a 20×15 board with random food placement, an untrained agent dies or times out hundreds of times before stumbling on food by accident. With only negative signal, the agent has no idea what it is optimising for. Curriculum learning (near-head food spawning) solved this.
+
+**Circling exploit.** Early reward structures were gamed by the agent circling in a tight 2×2 loop indefinitely — safe, predictable, and never dying. Every timeout-based fix was circumvented by making the loop smaller. The real fix was curriculum learning, which ensured the agent learned food-seeking before it could entrench a looping strategy.
+
+**Suicide from living penalty.** A `-0.01` per-step cost caused the agent to deliberately die after eating a few foods. After 100 steps the accumulated penalty equalled the death cost, making early death mathematically rational. Removing the living penalty entirely fixed this.
+
+**Score plateau at ~16.** The agent learned to chase food reliably but plateaued because it would trap itself with its own growing body. The flood-fill survival bonus — rewarding open space around the head every step — broke this plateau by teaching the agent to keep escape routes open proactively.
 
 ### MLP notes
 
 The hyperparameter tuning was conducted using 500k timesteps per trial due to computational constraints. The best parameters found by Optuna did not outperform the original parameters when trained for the full 5M timesteps. This is a known limitation — parameter combinations that converge quickly in short runs don't necessarily generalise to longer training runs. A more accurate tuning study would use a higher timestep budget per trial (ideally 2M+), but this was not feasible given available hardware.
 
 MLP best params from Optuna: `learning_rate=0.000689`, `n_steps=4096`, `batch_size=128`, `n_epochs=20`, `gamma=0.954`
+
+---
+
+## Conclusion
+
+The MLP policy significantly outperforms the CNN at equivalent timesteps (avg score 71 vs 9). This is not because CNNs are inherently worse, but because the 20×15 Snake board is small and structured enough that hand-crafted features (danger detection, flood-fill reachability) give the MLP agent near-perfect domain knowledge from step one. The CNN must rediscover these same concepts from raw pixels, requiring far more training data and still producing a less consistent policy — scoring anywhere from 1 to 20 within the same 100-episode evaluation run.
+
+On a visually complex environment where feature engineering is impossible, the CNN would likely win. Snake is not that environment — it is a case where knowing the right features matters more than having a powerful function approximator.
 
 ---
 
@@ -195,5 +232,6 @@ MLP best params from Optuna: `learning_rate=0.000689`, `n_steps=4096`, `batch_si
 - [x] Flood-fill reward shaping + extended observation (12 features)
 - [x] CNN policy with raw grid observation
 - [x] Curriculum learning for CNN (near-head food spawning in early training)
-- [ ] Train CNN policy to completion
-- [ ] Compare MLP vs CNN
+- [x] Flood-fill survival bonus for CNN
+- [x] Train CNN policy to completion
+- [x] Compare MLP vs CNN

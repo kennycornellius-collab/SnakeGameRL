@@ -6,21 +6,21 @@ from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from envCnn import SnakeEnv
 from cnn_policy import SnakeCNN
 
-TIMESTEPS   = 10_000_000  
+TIMESTEPS   = 15_000_000  
 N_ENVS      = 8
 MODEL_PATH  = "models/snake_cnn_ppo"
 LOG_PATH    = "logs/"
 EVAL_FREQ   = 50_000
 SAVE_FREQ   = 200_000
 
-LEARNING_RATE  = 3e-4     
+LEARNING_RATE  = 1e-4     
 N_STEPS        = 2048
 BATCH_SIZE     = 256
 N_EPOCHS       = 10
 GAMMA          = 0.99
 GAE_LAMBDA     = 0.95
 CLIP_RANGE     = 0.2
-ENT_COEF       = 0.01     
+ENT_COEF       = 0.005     
 FEATURES_DIM   = 256      
 
 def main():
@@ -46,6 +46,15 @@ def main():
         features_extractor_kwargs=dict(features_dim=FEATURES_DIM),
         net_arch=dict(pi=[128, 64], vf=[128, 64]),  
     )
+    # To continue training an existing model, comment the model = PPO(...) and model.learn(...) block
+    # and uncomment these code lines below:
+    # model = PPO.load("model final/before tuning/snake_cnn_ppo_10000000_steps.zip", env=env)
+    # model.learn(
+    #     total_timesteps=TIMESTEPS,
+    #     callback=[eval_callback, checkpoint_callback],
+    #     progress_bar=True,
+    #     reset_num_timesteps=False,
+    # )
 
     model = PPO(
         "CnnPolicy",
@@ -67,6 +76,7 @@ def main():
     print(f"Training for {TIMESTEPS:,} timesteps across {N_ENVS} parallel envs...")
     print(f"TensorBoard: tensorboard --logdir {LOG_PATH}\n")
 
+    
     model.learn(
         total_timesteps=TIMESTEPS,
         callback=[eval_callback, checkpoint_callback],

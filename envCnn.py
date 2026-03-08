@@ -21,6 +21,7 @@ DIR_VALUES = {
 
 
 CURRICULUM_THRESHOLD = 8
+
 CURRICULUM_RADIUS    = 2
 
 
@@ -59,7 +60,6 @@ class SnakeEnv(gym.Env):
         self._last_score       = 0
         self._steps_since_food = 0
 
-
         self._maybe_place_food_nearby()
         state = self.game._state()  
 
@@ -84,6 +84,10 @@ class SnakeEnv(gym.Env):
 
             if self._steps_since_food >= self.cols * self.rows:
                 return self._build_obs(state), -0.5, False, True, {"score": state["score"]}
+        if not terminated:
+            reachable  = self.game._flood_fill(tuple(state["body"][0]))
+            board_size = self.cols * self.rows
+            reward    += 0.01 * (reachable / board_size)
 
         truncated = state["steps"] >= MAX_STEPS
         obs       = self._build_obs(state)
