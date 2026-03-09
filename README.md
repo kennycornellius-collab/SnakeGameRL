@@ -5,7 +5,10 @@ A Snake game built from the ground up for reinforcement learning using [Gymnasiu
 The project trains and compares two policies on the same Snake environment — an **MLP policy** using hand-engineered features and a **CNN policy** learning directly from raw grid observations.
 
 ---
-
+## Overview
+A Snake game built from the ground up as a reinforcement learning testbed, comparing two fundamentally different approaches to the same problem: an MLP policy operating on hand-engineered features, and a CNN policy learning directly from raw grid observations.
+The project goes beyond a standard RL tutorial. Training the CNN agent required solving a chain of non-obvious problems — sparse rewards on a large board, a circling exploit the agent discovered to avoid dying, suicide behaviour induced by a naive living penalty, and a score plateau caused by self-trapping. Each required a targeted fix: curriculum learning, reward restructuring, and a flood-fill survival bonus that teaches the agent to preserve escape routes before it gets trapped.
+The MLP agent achieves an average score of 71 against the CNN's 9 over 100 episodes, not because CNNs are weaker, but because Snake is small and structured enough that knowing the right features matters more than raw representational power. The gap itself is the finding.
 ## Project structure
 
 ```
